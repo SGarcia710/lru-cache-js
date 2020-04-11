@@ -1,20 +1,13 @@
 const LRU = require("./LRU");
 
-// let lruCache = new LRU(3);
-// lruCache.write("a", 123);
-// lruCache.write("b", 456);
-// lruCache.write("c", 789);
+let lruCache = new LRU(3);
+lruCache.getEntry("hola");
 
-// lruCache.forEach((node, counter) => console.log(counter, node.key, node.value));
-// console.log(lruCache.read("a")); // output 123
-// lruCache.forEach((node, counter) => console.log(counter, node.key, node.value));
-// console.log(lruCache.read("b")); // output 123
-// lruCache.forEach((node, counter) => console.log(counter, node.key, node.value));
-// console.log(lruCache.read("a")); // output 123
-// lruCache.forEach((node, counter) => console.log(counter, node.key, node.value));
-// console.log(lruCache.read("c")); // output 123
-// lruCache.forEach((node, counter) => console.log(counter, node.key, node.value));
+lruCache.addEntry("a", 123);
+lruCache.addEntry("b", 456);
+lruCache.addEntry("c", 789);
+lruCache.addEntry("c", 0);
 
-// // Now max limit 3 is reached. Let's add a new element
-// lruCache.write("d", 0);
-// lruCache.forEach((node, counter) => console.log(counter, node.key, node.value));
+lruCache.forEach((entry, counter) => console.log(entry.key, entry.value));
+console.log("MRU -> a ->", lruCache.getEntry("a"));
+lruCache.forEach((entry, counter) => console.log(entry.key, entry.value));

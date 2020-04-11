@@ -1,108 +1,116 @@
 class Node {
-  constructor(key, value, next = null, prev = null) {
+  constructor(key, value, left = null, right = null) {
     this.key = key;
     this.value = value;
-    this.next = next;
-    this.prev = prev;
+    this.left = left;
+    this.right = right;
   }
 }
 
 class LRU {
   // Default limit is 100 if it is not passed.
   constructor(limit = 100) {
-    this.size = 0;
     this.limit = limit;
-    this.head = null;
-    this.tail = null;
-    this.cache = {};
+    this.start = null;
+    this.end = null;
+    this.cache = new Map();
   }
 
-  // Utility function to check if the cache has already the max entries quantity.
-  ensureLimit() {
-    if (this.size === this.limit) {
-      this.remove(this.tail.key);
+  // Get entry from cache map and make that node as new Head of LinkedList
+  getEntry(key) {
+    if (this.cache.has(key)) {
+      const entry = this.cache.get(key);
+      // Entry removed from it's position and cache
+      this.removeEntry(entry);
+      // write entry again to the head of double LinkedList to make it most recently used
+      this.addEntryToTop(entry);
+
+      return entry.value;
     }
+
+    console.log(`The entry ${key} doesn't exist on the cache.`);
+    return -1;
   }
 
-  // Write Node to head of Doubly LinkedList
-  // Update cache with Node key and Node reference
-  write(key, value) {
-    this.ensureLimit();
-
-    if (!this.head) {
-      this.head = this.tail = new Node(key, value);
+  // Add Entry to head of Doubly LinkedList
+  // Update cache with Entry key and Entry reference
+  addEntry(key, value) {
+    if (this.cache.has(key)) {
+      // if key already exist, just update the value and move it to top
+      console.log(
+        `You have tried to add a key which already exists. ${key} entry was updated.`
+      );
+      let entry = this.cache.get(key);
+      entry.value = value;
+      this.removeEntry(entry);
+      this.addEntryToTop(entry);
     } else {
-      const node = new Node(key, value, this.head);
-      this.head.prev = node;
-      this.head = node;
+      const newEntry = new Node(key, value);
+      if (this.cache.size === this.limit) {
+        console.log(
+          `You have reached the max size, we are going to delete the ${this.end.key} entry.`
+        );
+        // We have reached maxium size so need to make space for the new entry.
+        this.cache.delete(this.end.key);
+        this.removeEntry(this.end);
+        this.addEntryToTop(newEntry);
+      } else {
+        this.addEntryToTop(newEntry);
+      }
+      // Update the cache map
+      this.cache.set(key, newEntry);
     }
-
-    //Update the cache map
-    this.cache[key] = this.head;
-    this.size++;
   }
 
-  // Read from cache map and make that node as new Head of LinkedList
-  read(key) {
-    if (this.cache[key]) {
-      const value = this.cache[key].value;
-
-      // node removed from it's position and cache
-      this.remove(key);
-      // write node again to the head of LinkedList to make it most recently used
-      this.write(key, value);
-
-      return value;
+  addEntryToTop(entry) {
+    entry.right = this.start;
+    entry.left = null;
+    if (this.start !== null) {
+      this.start.left = entry;
     }
-
-    console.log(`Item not available in cache for key ${key}`);
+    this.start = entry;
+    if (this.end == null) {
+      this.end = this.start;
+    }
   }
 
-  remove(key) {
-    const node = this.cache[key];
-
-    // If the previous pointer is poiting to something
-    if (node.prev !== null) {
-      //
-      node.prev.next = node.next;
+  removeEntry(entry) {
+    if (entry.left !== null) {
+      entry.left.right = entry.right;
     } else {
-      this.head = node.next;
+      this.start = entry.right;
     }
 
-    if (node.next !== null) {
-      node.next.prev = node.prev;
+    if (entry.right !== null) {
+      entry.right.left = entry.left;
     } else {
-      this.tail = node.prev;
+      this.end = entry.left;
     }
-
-    delete this.cache[key];
-    this.size--;
   }
 
-  clear() {
-    this.head = null;
-    this.tail = null;
-    this.size = 0;
-    this.cache = {};
+  clearCache() {
+    this.start = null;
+    this.end = null;
+    this.cache.clear();
   }
 
-  // Invokes the callback function with every node of the chain and the index of the node.
-  forEach(fn) {
-    let node = this.head;
+  // Invokes the callback function with every entry of the chain and the index of the entry.
+  forEach(callback) {
+    let entry = this.start;
     let counter = 0;
-    while (node) {
-      fn(node, counter);
-      node = node.next;
+    while (entry) {
+      callback(entry, counter);
+      entry = entry.right;
       counter++;
     }
   }
 
   // To iterate over LRU with a 'for...of' loop
   *[Symbol.iterator]() {
-    let node = this.head;
-    while (node) {
-      yield node;
-      node = node.next;
+    let entry = this.head;
+    while (entry) {
+      yield entry;
+      entry = entry.next;
     }
   }
 }
