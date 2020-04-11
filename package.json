@@ -1,0 +1,25 @@
+{
+  "name": "y",
+  "version": "1.0.0",
+  "description": "LRU Cache implementation with JavaScript",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SGarcia710/lru-cache-js.git"
+  },
+  "keywords": [
+    "lru",
+    "cache",
+    "javascript",
+    "es5"
+  ],
+  "author": "Sebastián García @SGarcia710",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/SGarcia710/lru-cache-js/issues"
+  },
+  "homepage": "https://github.com/SGarcia710/lru-cache-js#readme"
+}
