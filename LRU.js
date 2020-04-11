@@ -7,9 +7,9 @@ class Node {
   }
 }
 
-export class LRU {
-  //set default limit of 10 if limit is not passed.
-  constructor(limit = 10) {
+class LRU {
+  // Default limit is 100 if it is not passed.
+  constructor(limit = 100) {
     this.size = 0;
     this.limit = limit;
     this.head = null;
@@ -17,6 +17,7 @@ export class LRU {
     this.cache = {};
   }
 
+  // Utility function to check if the cache has already the max entries quantity.
   ensureLimit() {
     if (this.size === this.limit) {
       this.remove(this.tail.key);
@@ -60,7 +61,9 @@ export class LRU {
   remove(key) {
     const node = this.cache[key];
 
+    // If the previous pointer is poiting to something
     if (node.prev !== null) {
+      //
       node.prev.next = node.next;
     } else {
       this.head = node.next;
@@ -103,3 +106,5 @@ export class LRU {
     }
   }
 }
+
+module.exports = LRU;
