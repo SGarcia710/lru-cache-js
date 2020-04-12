@@ -123,7 +123,11 @@ class LRU {
       this.cache.set(key, newEntry);
     }
     // create the expiration time
-    this.expires.set(key, this.now() + (entryTTL ? ms(entryTTL) : this.maxTTL));
+    this.expires.set(
+      key,
+      this.now() +
+        (entryTTL && ms(entryTTL) < this.maxTTL ? ms(entryTTL) : this.maxTTL)
+    );
   }
 
   // Add Entry to head of Doubly LinkedList
