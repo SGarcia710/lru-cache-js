@@ -1,3 +1,12 @@
+"use strict";
+
+// https://www.npmjs.com/package/ms
+const ms = require("ms");
+
+const DEFAULT_MAX_TTL = "30m";
+const DEFAULT_PURGE_INTERVAL = "1h";
+const DEFAULT_ENTRIES_LIMIT = 100;
+
 class Node {
   constructor(key, value, left = null, right = null) {
     this.key = key;
@@ -8,60 +17,116 @@ class Node {
 }
 
 class LRU {
-  // Default limit is 100 if it is not passed.
-  constructor(limit = 100) {
-    this.limit = limit;
+  // Default entries limit is 100 if its not passed.
+  // Default TTL for entries will be 30 minutes if its not passed.
+  // Default Interval to Purge expired entries will be 1 hour if its not passed.
+  constructor(entriesLimit, maxTTL, purgeInterval) {
+    this.entriesLimit = entriesLimit || DEFAULT_ENTRIES_LIMIT;
     this.start = null;
     this.end = null;
     this.cache = new Map();
+    this.expires = new Map();
+
+    this.maxTTL = maxTTL ? this.ms(maxTTL) : this.ms(DEFAULT_MAX_TTL);
+
+    purgeInterval = purgeInterval
+      ? this.ms(purgeInterval)
+      : this.ms(DEFAULT_PURGE_INTERVAL);
+
+    this.purgeInterval =
+      purgeInterval < Infinity
+        ? setInterval(this.purgeExpiredEntries.bind(this), purgeInterval)
+        : null;
   }
 
-  // Get entry from cache map and make that node as new Head of LinkedList
+  now() {
+    return Date.now();
+  }
+
+  ms(ttl) {
+    switch (typeof ttl) {
+      case "string":
+        ttl = ms(ttl);
+        break;
+      case "number":
+        ttl = Math.floor(ttl);
+        break;
+      default:
+        break;
+    }
+    return ttl > 0 ? ttl : this.maxTTL;
+  }
+
+  // This function checks if the given key its expired or not
+  check(key) {
+    return this.expires.get(key) > this.now();
+  }
+
+  purgeExpiredEntries() {
+    const now = this.now();
+    let keys = new Set();
+
+    // Getting the Expired's Entries keys
+    for (let pair of this.expires) {
+      if (pair[1] <= now) {
+        keys.add(pair[0]);
+      }
+    }
+
+    for (let key of keys) {
+      // Delete every expired entry
+      this.removeEntry(this.cache.get(key));
+      this.cache.delete(key);
+      this.expires.delete(key);
+    }
+    // Return the Expired's Entries keys
+    return keys;
+  }
+
+  // Get entry from cache map and update with that entry the head of the Doubly LinkedList
   getEntry(key) {
-    if (this.cache.has(key)) {
+    if (this.cache.has(key) && this.check(key)) {
       const entry = this.cache.get(key);
       // Entry removed from it's position and cache
       this.removeEntry(entry);
-      // write entry again to the head of double LinkedList to make it most recently used
+      // Move entry to the head of Doubly LinkedList to make it MRU
       this.addEntryToTop(entry);
 
+      // return entry.value;
       return entry.value;
     }
 
-    console.log(`The entry ${key} doesn't exist on the cache.`);
+    // The entry key doesn't exist or its expired on the cache.
     return -1;
   }
 
-  // Add Entry to head of Doubly LinkedList
-  // Update cache with Entry key and Entry reference
-  addEntry(key, value) {
+  addEntry(key, value, entryTTL) {
     if (this.cache.has(key)) {
-      // if key already exist, just update the value and move it to top
-      console.log(
-        `You have tried to add a key which already exists. ${key} entry was updated.`
-      );
+      // If they key already exist, just update the value and move it to top
       let entry = this.cache.get(key);
       entry.value = value;
       this.removeEntry(entry);
       this.addEntryToTop(entry);
     } else {
+      // If its a new key
       const newEntry = new Node(key, value);
-      if (this.cache.size === this.limit) {
-        console.log(
-          `You have reached the max size, we are going to delete the ${this.end.key} entry.`
-        );
-        // We have reached maxium size so need to make space for the new entry.
+      if (this.cache.size === this.entriesLimit) {
+        // If the cache has reached the maximum size, it needs to make space for the new entry.
         this.cache.delete(this.end.key);
         this.removeEntry(this.end);
         this.addEntryToTop(newEntry);
       } else {
+        // If cache has space
         this.addEntryToTop(newEntry);
       }
       // Update the cache map
       this.cache.set(key, newEntry);
     }
+    // create the expiration time
+    this.expires.set(key, this.now() + (entryTTL ? ms(entryTTL) : this.maxTTL));
   }
 
+  // Add Entry to head of Doubly LinkedList
   addEntryToTop(entry) {
     entry.right = this.start;
     entry.left = null;
@@ -74,6 +139,7 @@ class LRU {
     }
   }
 
+  // Remove Entry from the Doubly LinkedList
   removeEntry(entry) {
     if (entry.left !== null) {
       entry.left.right = entry.right;
@@ -92,6 +158,7 @@ class LRU {
     this.start = null;
     this.end = null;
     this.cache.clear();
+    this.expires.clear();
   }
 
   // Invokes the callback function with every entry of the chain and the index of the entry.

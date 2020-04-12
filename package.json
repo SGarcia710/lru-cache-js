@@ -1,10 +1,9 @@
 {
-  "name": "y",
+  "name": "lru-cache-js",
   "version": "1.0.0",
   "description": "LRU Cache implementation with JavaScript",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon index.js"
   },
   "repository": {
@@ -14,8 +13,11 @@
   "keywords": [
     "lru",
     "cache",
+    "double linked list",
     "javascript",
-    "es5"
+    "es5",
+    "ttl",
+    "hashtable"
   ],
   "author": "Sebastián García @SGarcia710",
   "license": "MIT",
@@ -25,5 +27,8 @@
   "homepage": "https://github.com/SGarcia710/lru-cache-js#readme",
   "devDependencies": {
     "nodemon": "2.0.3"
+  },
+  "dependencies": {
+    "ms": "2.1.2"
   }
 }
